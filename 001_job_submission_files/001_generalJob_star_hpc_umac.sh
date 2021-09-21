@@ -29,7 +29,7 @@ echo "#!/bin/bash
 #SBATCH --output                        job.%j.out 
 #SBATCH --error                         job.%j.err 
 #SBATCH --mail-type                     FAIL 
-#SBATCH --mail-user                     yb57653@umac.mo
+#SBATCH --mail-user                     yb57653@um.edu.mo
 
 " >> $submit_job_file 
 
