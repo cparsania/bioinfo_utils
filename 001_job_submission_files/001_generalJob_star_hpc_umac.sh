@@ -1,11 +1,10 @@
-
 # RAW_DATA_DIR : path to directory sample wise directories. Each sample directory contain fastq (r1 & r2) fastq files.
 # GENOME_DIR : path to star genome 
 
 RAW_DATA_DIR=/home/yb57653/pearl/Projects/Nandan/candida_rnaseq/2_fastq
-GENOME_DIR=/home/yb57653/pearl/Projects/Nandan/candida_rnaseq/1_genome/c_albicans/star_index/star_index
+GENOME_DIR=/home/yb57653/pearl/Projects/Nandan/candida_rnaseq/1_genome/c_glabrata/star_index/
 N_THREAD=12
-file_chrSize=/home/yb57653/pearl/Projects/Nandan/candida_rnaseq/1_genome/c_albicans/star_index/star_index/chrNameLength.txt
+file_chrSize=/home/yb57653/pearl/Projects/Nandan/candida_rnaseq/1_genome/c_glabrata/star_index/chrNameLength.txt
 
 for i in `cat sampleName.txt`
 
@@ -15,6 +14,9 @@ R1=$RAW_DATA_DIR/$i/${i}_r1.fastq.gz
 R2=$RAW_DATA_DIR/$i/${i}_r2.fastq.gz
 OUTPUT_PREFIX=$PWD/$i/${i}_star_align
 submit_job_file=$PWD/$i/${i}_submit_job_new.sh
+OUT_BDG=${OUTPUT_PREFIX}_normalised.bdg
+OUT_BW=${OUTPUT_PREFIX}_normalised.bw
+
 
 	mkdir $i 
 	touch $submit_job_file 
@@ -37,6 +39,8 @@ echo -e "\n\n\n">> $submit_job_file
 
 echo "# STAR" >> $submit_job_file 
 
+echo -e "\n\n\n">> $submit_job_file 
+
 echo STAR \
 --limitBAMsortRAM 100000000000 \
 --genomeLoad LoadAndKeep \
@@ -47,14 +51,29 @@ echo STAR \
 --outFileNamePrefix  $OUTPUT_PREFIX \
 --outSAMtype BAM SortedByCoordinate \
 --outWigType  bedGraph \
---outWigNorm RPM >> $submit_job_file 
+--outWigNorm RPM >> $submit_job_file
+
+echo -e "\n\n\n">> $submit_job_file 
+
+echo "# bam to bedgraph" >> $submit_job_file 
+
+echo -e "\n\n\n">> $submit_job_file 
+
+echo "mappedReads=\`cat $PWD/$i/*.final.out | grep \"Uniquely mapped reads number\" | grep -o '[[:digit:]]*'\`" >> $submit_job_file
+echo "scale=\`perl -e \"printf('%.3f', 1000000/\${mappedReads})\"\`" >> $submit_job_file
+
+echo "bedtools genomecov -scale \${scale} -bga -split -ibam *sortedByCoord.out.bam > ${OUT_BDG}" >> $submit_job_file
+
+echo "bedtools sort -i $OUT_BDG > ${OUT_BDG}_sort" >> $submit_job_file
 
 echo -e "\n\n\n">> $submit_job_file 
 
 echo "# bedgraph to bw" >> $submit_job_file 
 
-echo bedGraphToBigWig ${OUTPUT_PREFIX}Signal.Unique.str1.out.bg \
+echo -e "\n\n\n">> $submit_job_file 
+
+echo bedGraphToBigWig ${OUT_BDG}_sort \
 ${file_chrSize} \
-${OUTPUT_PREFIX}_normalized.bw >> $submit_job_file 	
+${OUT_BW} >> $submit_job_file 	
 
 done
