@@ -24,11 +24,9 @@ OUT_BW=${OUTPUT_PREFIX}_normalised.bw
 	touch $submit_job_file 
 
 echo  "\n\n\n">> $submit_job_file 
-
 echo "###############" >> $submit_job_file 
 echo "# STAR" >> $submit_job_file 
 echo "###############" >> $submit_job_file 
-
 echo  "\n\n\n">> $submit_job_file 
 
 echo STAR \
@@ -44,11 +42,9 @@ echo STAR \
 --outWigNorm RPM >> $submit_job_file
 
 echo  "\n\n\n">> $submit_job_file 
-
 echo "###############" >> $submit_job_file
 echo "# bam to bedgraph" >> $submit_job_file
 echo "###############" >> $submit_job_file
-
 echo "\n\n\n">> $submit_job_file 
 
 echo "mappedReads=\`cat $PWD/$i/*.final.out | grep \"Uniquely mapped reads number\" | grep -o '[[:digit:]]*'\`" >> $submit_job_file
@@ -59,11 +55,9 @@ echo "bedtools genomecov -scale \${scale} -bga -split -ibam *sortedByCoord.out.b
 echo "bedtools sort -i $OUT_BDG > ${OUT_BDG}_sort" >> $submit_job_file
 
 echo "\n\n\n">> $submit_job_file 
-
 echo "###############" >> $submit_job_file
 echo "# bedgraph to bw" >> $submit_job_file
 echo "###############" >> $submit_job_file
-
 echo  "\n\n\n">> $submit_job_file 
 
 echo bedGraphToBigWig ${OUT_BDG}_sort \
