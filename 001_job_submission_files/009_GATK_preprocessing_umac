@@ -1,0 +1,101 @@
+#!/bin/sh
+#$ -S /bin/bash
+#$ -cwd
+#$ -V
+#$ -N bwa_preprocess
+#$ -j y
+#$ -A cparsania
+#$ -q urgent.q
+#$ -pe orte 48
+#$ -m bes
+#$ -M cparsania@umac.mo
+
+. /opt/gridengine/default/common/settings.sh
+. /etc/profile.d/modules.sh
+
+SCRIPT_HOME=`pwd`
+
+module add java/jdk1.8.0_25
+module add gatk/3.3
+
+#java -jar /share/apps/gatk/gcc/bin/GenomeAnalysisTK.jar -h
+
+
+echo "**************************************************************************************************bwa started**************************************************************************************************"
+
+/share/apps/blastall/2.2.23/bin/bwa  mem -t $NSLOTS \
+/home/cparsania/Database/human/b37/genomes/human_g1k_v37_renamed.fasta \
+/home/cparsania/Projects/Miaokai/raw_fastq/combine/mt_comb_r1.fastq \
+/home/cparsania/Projects/Miaokai/raw_fastq/combine/mt_comb_r2.fastq \
+-M -R "@RG\tID:FHS_MIX7\tSM:mut\tPL:illumina\tLB:Combined_1_2_3\tPU:unit1" > /home/cparsania/Projects/Miaokai/mt/mt_bwa_alignment.sam
+
+
+echo "**************************************************************************************************bwa Finished **************************************************************************************************"
+
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+
+
+echo "**************************************************************************************************Sorting Started **************************************************************************************************"
+
+java -Xmx500g -Djava.io.tmpdir=`pwd`  -jar /share/apps/gatk/src/picard-tools-1.119/SortSam.jar \
+TMP_DIR=`pwd`/tmp \
+INPUT=/home/cparsania/Projects/Miaokai/mt/mt_bwa_alignment.sam \
+OUTPUT=/home/cparsania/Projects/Miaokai/mt/mt_bwa_alignment_sorted.bam \
+SORT_ORDER=coordinate \
+MAX_RECORDS_IN_RAM=5000000
+
+echo "**************************************************************************************************Sorting Finished **************************************************************************************************"
+
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+
+
+echo "**************************************************************************************************Mark Dulpicate Started **************************************************************************************************"
+
+
+
+java -Djava.io.tmpdir=`pwd`/tmp  \
+-jar /share/apps/gatk/src/picard-tools-1.119/MarkDuplicates.jar \
+TMP_DIR=`pwd`/tmp \
+INPUT=/home/cparsania/Projects/Miaokai/mt/mt_bwa_alignment_sorted.bam \
+OUTPUT=/home/cparsania/Projects/Miaokai/mt/mt_dedup_reads.bam \
+ASSUME_SORTED=true \
+METRICS_FILE=/home/cparsania/Projects/Miaokai/mt/mt_metrics.txt
+
+
+
+
+echo "**************************************************************************************************Mark Duplicate Finished **************************************************************************************************"
+
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+
+
+echo "**************************************************************************************************Get Alignment Stats **************************************************************************************************"  
+ 
+java -Xmx50g -Xms50g -Djava.io.tmpdir=`pwd`/tmp -jar /share/apps/gatk/src/picard-tools-1.119/CollectAlignmentSummaryMetrics.jar \
+INPUT=/home/cparsania/Projects/Miaokai/mt/mt_bwa_alignment_sorted.bam \
+REFERENCE_SEQUENCE=/home/cparsania/Database/human/b37/genomes/human_g1k_v37_renamed.fasta \
+OUTPUT=mt_stats.txt \
+    
+echo "************************************************************************************************** Alignment Stats Finished **************************************************************************************************"
+
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"
+echo "$$$$$$$$$$$$$$$$$$$$$$$"   
